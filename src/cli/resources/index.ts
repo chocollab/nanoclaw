@@ -3,6 +3,7 @@
  * `registerResource(...)` call.
  */
 import './activity.js';
+import './computer.js';
 import './groups.js';
 import './messaging-groups.js';
 import './wirings.js';
