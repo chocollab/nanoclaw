@@ -243,12 +243,12 @@ describe('unknown-channel registration flow', () => {
     expect(kind).toBe('chat-sdk');
     const payload = JSON.parse(content as string);
     expect(payload.type).toBe('ask_question');
-    expect(payload.title).toBe('📣 Bot mentioned in new channel');
+    expect(payload.title).toBe('📣 Бота згадали в новому каналі');
     expect(payload.question).toBe(
-      `Caller mentioned your bot in a telegram channel. If connected, the agent will respond to @-mentions in this group. ${AGENT_ACCESS_SCOPE_WARNING} How would you like to handle this channel?`,
+      `Caller згадує твого бота в каналі telegram. Якщо підключити, агент відповідатиме на згадки (@) у цій групі. ${AGENT_ACCESS_SCOPE_WARNING} Що робити з цим каналом?`,
     );
     // Card tells the approver the resolved engage rule.
-    expect(payload.question).toContain('will respond to @-mentions in this group');
+    expect(payload.question).toContain('відповідатиме на згадки (@) у цій групі');
     expect(payload.question).toContain(AGENT_ACCESS_SCOPE_WARNING);
     // Single-agent card offers a direct "Connect to <name>" button.
     const connectOption = payload.options.find((o: { value: string }) => o.value.startsWith('connect:'));
@@ -272,10 +272,10 @@ describe('unknown-channel registration flow', () => {
     await expectAsyncDelivery(() => routeInbound(slackGroupMention('mpdm-alice--bob--carol-1')));
 
     const payload = JSON.parse(deliverMock.mock.calls[0][4] as string) as { title: string; question: string };
-    expect(payload.title).toBe('👥 Bot mentioned in new group chat');
-    expect(payload.question).toContain('Alice Doe mentioned your bot in a group chat with Bob and Carol on slack.');
+    expect(payload.title).toBe('👥 Бота згадали в новому груповому чаті');
+    expect(payload.question).toContain('Alice Doe згадує твого бота в груповому чаті разом з Bob і Carol у slack.');
     expect(payload.question).toContain(AGENT_ACCESS_SCOPE_WARNING);
-    expect(payload.question).toContain('How would you like to handle this group chat?');
+    expect(payload.question).toContain('Що робити з цим груповим чатом?');
     expect(payload.question).not.toContain('mpdm-');
     expect(resolveConversationMock).toHaveBeenCalledWith('mpdm-alice--bob--carol-1');
   });
@@ -288,9 +288,9 @@ describe('unknown-channel registration flow', () => {
     await expectAsyncDelivery(() => routeInbound(slackGroupMention('C_GROWTH')));
 
     const payload = JSON.parse(deliverMock.mock.calls[0][4] as string) as { title: string; question: string };
-    expect(payload.title).toBe('📣 Bot mentioned in new channel');
-    expect(payload.question).toContain('Alice Doe mentioned your bot in growth-team on slack.');
-    expect(payload.question).toContain('How would you like to handle this channel?');
+    expect(payload.title).toBe('📣 Бота згадали в новому каналі');
+    expect(payload.question).toContain('Alice Doe згадує твого бота в growth-team у slack.');
+    expect(payload.question).toContain('Що робити з цим каналом?');
     expect(resolveChannelNameMock).not.toHaveBeenCalled();
     expect((await getMessagingGroupByPlatform('slack', 'C_GROWTH'))?.name).toBe('growth-team');
   });
@@ -301,7 +301,7 @@ describe('unknown-channel registration flow', () => {
 
     expect(deliverMock).toHaveBeenCalledTimes(1);
     const payload = JSON.parse(deliverMock.mock.calls[0][4] as string) as { question: string };
-    expect(payload.question).toContain('will respond to all messages');
+    expect(payload.question).toContain('відповідатиме на всі повідомлення');
     expect(payload.question).toContain(AGENT_ACCESS_SCOPE_WARNING);
     const count = await countRows('SELECT COUNT(*) AS c FROM pending_channel_approvals');
     expect(count).toBe(1);

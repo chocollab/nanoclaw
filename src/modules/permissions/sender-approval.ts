@@ -50,8 +50,8 @@ import { getUser } from './db/users.js';
 import { AGENT_ACCESS_SCOPE_WARNING } from './channel-approval.js';
 
 const APPROVAL_OPTIONS: RawOption[] = [
-  { label: 'Allow', selectedLabel: '✅ Allowed', value: 'approve', style: 'primary' },
-  { label: 'Deny', selectedLabel: '❌ Denied', value: 'reject', style: 'danger' },
+  { label: 'Дозволити', selectedLabel: '✅ Дозволено', value: 'approve', style: 'primary' },
+  { label: 'Відхилити', selectedLabel: '❌ Відхилено', value: 'reject', style: 'danger' },
 ];
 
 function generateId(): string {
@@ -111,8 +111,8 @@ export async function requestSenderApproval(input: RequestSenderApprovalInput): 
   const senderDisplay = senderName && senderName.length > 0 ? senderName : senderIdentity;
   const originName = originMg?.name ?? `a ${originChannelType} channel`;
 
-  const title = '👤 New sender';
-  const question = `${senderDisplay} wants to talk to your agent in ${originName}. ${AGENT_ACCESS_SCOPE_WARNING} Allow?`;
+  const title = '👤 Новий співрозмовник';
+  const question = `${senderDisplay} хоче поспілкуватися з твоїм агентом у ${originName}. ${AGENT_ACCESS_SCOPE_WARNING} Дозволити?`;
   const options = normalizeOptions(APPROVAL_OPTIONS);
 
   await createPendingSenderApproval({
@@ -260,7 +260,8 @@ export async function declineAndNotify(input: DeclineAndNotifyInput): Promise<vo
   // a per-agent bot identity registered as its own adapter instance
   // answers as itself.
   const owner = await ownerDisplayName();
-  const declineText = input.declineText ?? `I'm ${owner ?? 'my owner'}'s personal agent — I can't help you directly.`;
+  const declineText =
+    input.declineText ?? `Я особистий агент (власник: ${owner ?? 'не вказано'}) — не можу допомогти тобі напряму.`;
   try {
     await adapter.deliver(
       event.channelType,
@@ -288,12 +289,13 @@ export async function declineAndNotify(input: DeclineAndNotifyInput): Promise<vo
     return;
   }
 
-  const senderDisplay = senderName && senderName.length > 0 ? senderName : (senderIdentity ?? 'An unknown sender');
+  const senderDisplay =
+    senderName && senderName.length > 0 ? senderName : (senderIdentity ?? 'Невідомий співрозмовник');
   const who =
     senderIdentity && senderDisplay !== senderIdentity ? `${senderDisplay} (${senderIdentity})` : senderDisplay;
   const fyiText =
     input.fyiText ??
-    `FYI: ${who} DMed your agent on ${event.channelType} — I sent a polite decline. Allow them any time with \`ncl members add\`.`;
+    `До відома: вхідне повідомлення від ${who} у ${event.channelType} — бот ввічливо відмовив. Дозволити будь-коли командою \`ncl members add\`.`;
   try {
     await adapter.deliver(
       target.messagingGroup.channel_type,

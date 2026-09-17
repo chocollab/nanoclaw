@@ -204,7 +204,7 @@ describe('unknown-sender decline_notify flow', () => {
     expect(dThread).toBeNull();
     expect(dKind).toBe('chat-sdk');
     const decline = JSON.parse(dContent as string);
-    expect(decline.text).toBe("I'm Alex's personal agent — I can't help you directly.");
+    expect(decline.text).toBe('Я особистий агент (власник: Alex) — не можу допомогти тобі напряму.');
     expect(decline.options).toBeUndefined(); // plain text, no buttons
 
     // (b) One-line FYI to the owner's DM — informational, not a card.
@@ -215,7 +215,7 @@ describe('unknown-sender decline_notify flow', () => {
     const fyi = JSON.parse(fContent as string);
     expect(fyi.type).toBeUndefined(); // not ask_question
     expect(fyi.options).toBeUndefined();
-    expect(fyi.text).toContain('FYI');
+    expect(fyi.text).toContain('До відома');
     expect(fyi.text).toContain('Stranger (tg:stranger)');
     expect(fyi.text).toContain('ncl members add');
 

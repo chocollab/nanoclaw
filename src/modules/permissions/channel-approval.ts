@@ -68,7 +68,7 @@ export const REJECT_VALUE = 'reject';
 // This deliberately does not claim "the same authority as you": approved members cannot run admin commands,
 // which command-gate.ts gates on hasAdminPrivilege, but it names the real shared context, workspace, memory, and tool blast radius.
 export const AGENT_ACCESS_SCOPE_WARNING =
-  "Anyone approved here can interact with the agent and potentially access anything the agent can access, including other conversations' context, its workspace files and memory, and any connected tools.";
+  'Будь-хто, кого тут схвалено, зможе спілкуватися з агентом і потенційно отримати доступ до всього, що бачить сам агент — включно з контекстом інших розмов, файлами робочої області, пам’яттю та підключеними інструментами.';
 
 // ── Channel-card interceptor seam (B2/D24) ──
 // A channel module can claim the escalation for its own channel type before
@@ -123,26 +123,26 @@ async function buildApprovalOptions(agentGroups: AgentGroup[], approverUserId?: 
   const options: RawOption[] = [];
   if (visibleAgentGroups.length === 1) {
     options.push({
-      label: `Connect to ${visibleAgentGroups[0].name}`,
-      selectedLabel: `✅ Connected to ${visibleAgentGroups[0].name}`,
+      label: `Підключити до ${visibleAgentGroups[0].name}`,
+      selectedLabel: `✅ Підключено до ${visibleAgentGroups[0].name}`,
       value: `${CONNECT_PREFIX}${visibleAgentGroups[0].id}`,
       style: 'primary',
     });
   } else if (visibleAgentGroups.length > 1) {
     options.push({
-      label: 'Choose existing agent',
-      selectedLabel: '📋 Choosing…',
+      label: 'Обрати наявного агента',
+      selectedLabel: '📋 Обираю…',
       value: CHOOSE_EXISTING_VALUE,
     });
   }
   options.push({
-    label: 'Connect new agent',
-    selectedLabel: '🆕 Connecting new agent…',
+    label: 'Підключити нового агента',
+    selectedLabel: '🆕 Підключаю нового агента…',
     value: NEW_AGENT_VALUE,
   });
   options.push({
-    label: 'Reject',
-    selectedLabel: '🙅 Rejected',
+    label: 'Відхилити',
+    selectedLabel: '🙅 Відхилено',
     value: REJECT_VALUE,
     style: 'danger',
   });
@@ -158,11 +158,11 @@ function buildQuestionText(
   ruleNote: string | null,
   resolvedConversation: ResolvedConversation | null,
 ): string {
-  const who = senderName ?? 'Someone';
-  const note = ruleNote ? ` If connected, the agent ${ruleNote}.` : '';
+  const who = senderName ?? 'Хтось';
+  const note = ruleNote ? ` Якщо підключити, агент ${ruleNote}.` : '';
   if (conversationType === 'channel') {
-    const where = channelName ? `${channelName} on ${channelType}` : `a ${channelType} channel`;
-    return `${who} mentioned your bot in ${where}.${note} ${AGENT_ACCESS_SCOPE_WARNING} How would you like to handle this channel?`;
+    const where = channelName ? `${channelName} у ${channelType}` : `каналі ${channelType}`;
+    return `${who} згадує твого бота в ${where}.${note} ${AGENT_ACCESS_SCOPE_WARNING} Що робити з цим каналом?`;
   }
   if (conversationType === 'group_dm') {
     const participantNames = resolvedConversation?.participantNames ?? [];
@@ -172,16 +172,16 @@ function buildQuestionText(
       useParticipantIds ? participantIds![index] !== senderId : name.toLowerCase() !== senderName?.toLowerCase(),
     );
     const participants = formatParticipantList(otherParticipants);
-    const withParticipants = participants ? ` with ${participants}` : '';
-    return `${who} mentioned your bot in a group chat${withParticipants} on ${channelType}.${note} ${AGENT_ACCESS_SCOPE_WARNING} How would you like to handle this group chat?`;
+    const withParticipants = participants ? ` разом з ${participants}` : '';
+    return `${who} згадує твого бота в груповому чаті${withParticipants} у ${channelType}.${note} ${AGENT_ACCESS_SCOPE_WARNING} Що робити з цим груповим чатом?`;
   }
-  return `${who} sent your bot a DM on ${channelType}.${note} ${AGENT_ACCESS_SCOPE_WARNING} How would you like to handle it?`;
+  return `${who} пише твоєму боту особисто в ${channelType}.${note} ${AGENT_ACCESS_SCOPE_WARNING} Що з цим робити?`;
 }
 
 function formatParticipantList(names: string[]): string {
   if (names.length < 2) return names[0] ?? '';
-  if (names.length === 2) return `${names[0]} and ${names[1]}`;
-  return `${names.slice(0, -1).join(', ')}, and ${names.at(-1)}`;
+  if (names.length === 2) return `${names[0]} і ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')} і ${names.at(-1)}`;
 }
 
 /**
@@ -198,11 +198,11 @@ function describeResolvedRule(
   try {
     const engage = resolveWiringDefaults(channelKey, isGroup, agentGroupName, channelType);
     if (engage.engage_mode !== 'pattern') {
-      return isGroup ? 'will respond to @-mentions in this group' : 'will respond to @-mentions';
+      return isGroup ? 'відповідатиме на згадки (@) у цій групі' : 'відповідатиме на згадки (@)';
     }
     return engage.engage_pattern === '.'
-      ? 'will respond to all messages'
-      : `will respond to messages matching ${engage.engage_pattern}`;
+      ? 'відповідатиме на всі повідомлення'
+      : `відповідатиме на повідомлення за шаблоном ${engage.engage_pattern}`;
   } catch {
     return null;
   }
@@ -320,10 +320,10 @@ export async function requestChannelApproval(input: RequestChannelApprovalInput)
   const channelName = originMg?.name ?? null;
   const title =
     conversationType === 'channel'
-      ? '📣 Bot mentioned in new channel'
+      ? '📣 Бота згадали в новому каналі'
       : conversationType === 'group_dm'
-        ? '👥 Bot mentioned in new group chat'
-        : '💬 New direct message';
+        ? '👥 Бота згадали в новому груповому чаті'
+        : '💬 Нове особисте повідомлення';
   // Preview the engage rule an approval would create. The reference group's
   // name only feeds {name} pattern substitution — a best-effort preview when
   // the approver ends up picking a different agent.
