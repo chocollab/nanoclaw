@@ -1,3 +1,4 @@
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -22,6 +23,10 @@ const envConfig = readEnvFile([
   'NANOCLAW_EGRESS_NETWORK',
   'ONECLI_GATEWAY_CONTAINER',
   'WEBHOOK_PORT',
+  'WHISPER_URL',
+  'VOICE_TRANSCRIPTION_TIMEOUT_MS',
+  'VOICE_LANGUAGE',
+  'FFMPEG_PATH',
 ]);
 
 /**
@@ -113,6 +118,32 @@ export const EGRESS_NETWORK =
   process.env.NANOCLAW_EGRESS_NETWORK || envConfig.NANOCLAW_EGRESS_NETWORK || 'nanoclaw-egress';
 export const ONECLI_GATEWAY_CONTAINER =
   process.env.ONECLI_GATEWAY_CONTAINER || envConfig.ONECLI_GATEWAY_CONTAINER || 'onecli';
+
+// Local whisper.cpp server for voice-note transcription (see docs/voice-transcription.md).
+// Runs on the host (this process), not inside an agent container, so it's
+// reached directly — no host.docker.internal / NO_PROXY dance needed here.
+export const WHISPER_URL = process.env.WHISPER_URL || envConfig.WHISPER_URL || 'http://127.0.0.1:8765';
+export const VOICE_TRANSCRIPTION_TIMEOUT_MS = Number(
+  process.env.VOICE_TRANSCRIPTION_TIMEOUT_MS || envConfig.VOICE_TRANSCRIPTION_TIMEOUT_MS || 25_000,
+);
+// Language hint for whisper — improves accuracy over auto-detect when the
+// owner's voice notes are consistently one language.
+export const VOICE_LANGUAGE = process.env.VOICE_LANGUAGE || envConfig.VOICE_LANGUAGE || 'uk';
+
+// Path to the ffmpeg binary used for voice-note transcoding. launchd services
+// get a bare-bones PATH (no /opt/homebrew/bin), so `spawn('ffmpeg', ...)`
+// fails with ENOENT even though it works fine from an interactive shell.
+// Explicit override wins; otherwise probe common install locations before
+// falling back to a plain PATH lookup.
+function resolveFfmpegPath(): string {
+  const override = process.env.FFMPEG_PATH || envConfig.FFMPEG_PATH;
+  if (override) return override;
+  for (const candidate of ['/opt/homebrew/bin/ffmpeg', '/usr/local/bin/ffmpeg', '/usr/bin/ffmpeg']) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return 'ffmpeg';
+}
+export const FFMPEG_PATH = resolveFfmpegPath();
 
 // Resolve when the listener starts so a late process override still wins.
 export function getWebhookPort(): number {

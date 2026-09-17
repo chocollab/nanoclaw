@@ -26,6 +26,12 @@ import { log } from './log.js';
 import { getAgentMailbox, type InboundMessage, type MailboxSession } from './mailbox/index.js';
 import { enqueueSessionReconcile } from './reconcile-feeds.js';
 import type { Session } from './types.js';
+import { transcribeVoice } from './voice-transcription.js';
+
+/** MIME types worth sending to whisper. Telegram voice notes are audio/ogg;
+ *  other channels (WhatsApp voice, Telegram "audio" file uploads) may send
+ *  mpeg/mp4/wav — ffmpeg normalizes all of them before transcription. */
+const TRANSCRIBABLE_MIME_TYPES = new Set(['audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/wav']);
 
 /** Root directory for all session data. */
 export function sessionsBaseDir(): string {
@@ -294,7 +300,8 @@ export async function writeSessionMessage(
   initSessionFolder(agentGroupId, sessionId);
 
   // Extract base64 attachment data, save to inbox, replace with file paths
-  const content = extractAttachmentFiles(agentGroupId, sessionId, message.id, message.content);
+  // (and, for voice notes, transcribe them into the message text).
+  const content = await extractAttachmentFiles(agentGroupId, sessionId, message.id, message.content);
 
   await withMailboxSession(agentGroupId, sessionId, async (mailbox) => {
     await mailbox.insertMessage({
@@ -321,7 +328,12 @@ export async function writeSessionMessage(
 
 /**
  * If message content has attachments with base64 `data`, save them to
- * the session's inbox directory and replace with `localPath`.
+ * the session's inbox directory and replace with `localPath`. Voice notes
+ * (audio/ogg, audio/mpeg, audio/mp4, audio/wav) are additionally transcribed
+ * and the text appended to `parsed.text`, so the agent reads what was said
+ * instead of just seeing a file it has no way to listen to. Transcription
+ * failure never blocks the message — it degrades to a plain "couldn't
+ * transcribe" note and the raw audio file is still saved either way.
  *
  * Both `messageId` and `att.name` originate in untrusted input. WhatsApp
  * passes `msg.key.id` through raw (and that field is client generated, so a
@@ -337,12 +349,12 @@ export async function writeSessionMessage(
  *   4. `wx` flag on writeFileSync to refuse following a pre-existing symlink
  *      at the target file path or overwriting any existing file.
  */
-function extractAttachmentFiles(
+async function extractAttachmentFiles(
   agentGroupId: string,
   sessionId: string,
   messageId: string,
   contentStr: string,
-): string {
+): Promise<string> {
   let parsed: Record<string, unknown>;
   try {
     parsed = JSON.parse(contentStr);
@@ -388,11 +400,12 @@ function extractAttachmentFiles(
     if (!inboxDir) break;
 
     const filePath = path.join(inboxDir, filename);
+    const rawBytes = Buffer.from(att.data as string, 'base64');
     try {
       // wx = exclusive create. Refuses to follow a pre existing symlink or
       // overwrite any existing file. The host expects to be the sole writer
       // of these attachments.
-      fs.writeFileSync(filePath, Buffer.from(att.data as string, 'base64'), { flag: 'wx' });
+      fs.writeFileSync(filePath, rawBytes, { flag: 'wx' });
     } catch (err: unknown) {
       const e = err as NodeJS.ErrnoException;
       if (e.code === 'EEXIST') {
@@ -410,6 +423,19 @@ function extractAttachmentFiles(
     delete att.data;
     changed = true;
     log.debug('Saved attachment to inbox', { messageId, filename, size: att.size });
+
+    // Voice note: transcribe on the host and fold the text into the message
+    // so the agent gets words, not just a file path it can't listen to.
+    const mime = typeof att.mimeType === 'string' ? att.mimeType.toLowerCase() : '';
+    if (TRANSCRIBABLE_MIME_TYPES.has(mime)) {
+      const result = await transcribeVoice(rawBytes);
+      const existingText = typeof parsed.text === 'string' ? parsed.text : '';
+      const note = result
+        ? `[Голосове повідомлення, розпізнано автоматично]: ${result.text}`
+        : `[Голосове повідомлення — не вдалося розпізнати автоматично]`;
+      parsed.text = existingText ? `${existingText}\n${note}` : note;
+      changed = true;
+    }
   }
 
   return changed ? JSON.stringify(parsed) : contentStr;

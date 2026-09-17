@@ -2,6 +2,7 @@
  * Resource barrel — imports each resource module for its side-effect
  * `registerResource(...)` call.
  */
+import './activity.js';
 import './groups.js';
 import './messaging-groups.js';
 import './wirings.js';
