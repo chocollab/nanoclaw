@@ -33,7 +33,7 @@ import { fanOutboundMessage } from './modules/cross-session-context/index.js';
 import { log } from './log.js';
 import { normalizeOptions } from './channels/ask-question.js';
 import { clearOutbox, readOutboxFiles, withExistingMailboxSession } from './session-manager.js';
-import { pauseTypingRefreshAfterDelivery, setTypingAdapter } from './modules/typing/index.js';
+import { pauseTypingRefreshAfterDelivery, setTypingAdapter, stopTypingRefresh } from './modules/typing/index.js';
 import type { OutboundFile } from './channels/adapter.js';
 import type { PendingApproval, Session } from './types.js';
 import type { OutboundMessage } from './mailbox/index.js';
@@ -296,6 +296,10 @@ async function drainSession(session: Session): Promise<void> {
 
   for (const msg of pending) {
     try {
+      const activity = msg.channelType === 'telegram' ? JSON.parse(msg.content).telegramActivity : undefined;
+      if (activity?.phase === 'complete' && activity.after?.some((id: string) => !delivered.has(id))) {
+        throw new Error('Telegram cleanup is waiting for preceding turn messages to be delivered');
+      }
       const platformMsgId = await deliverMessage(msg, session);
       await withExistingMailboxSession(agentGroup.id, session.id, (mailbox) =>
         mailbox.markDelivered(msg.id, platformMsgId ?? null),
@@ -303,6 +307,11 @@ async function drainSession(session: Session): Promise<void> {
       const firstDelivery = delivered.size === 0;
       delivered.add(msg.id);
       await clearAttemptRow(msg.id);
+      if (activity) {
+        if (activity.phase === 'complete') stopTypingRefresh(session.id);
+        // Internal activity rows must not be echoed into other conversations.
+        continue;
+      }
       if (msg.kind !== 'system' && msg.channelType !== 'agent') {
         pauseTypingRefreshAfterDelivery(session.id);
         if (msg.kind !== 'task_log') {

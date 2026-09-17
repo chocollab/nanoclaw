@@ -172,7 +172,7 @@ export function startTypingRefresh(
  */
 export function pauseTypingRefreshAfterDelivery(sessionId: string): void {
   const entry = typingRefreshers.get(sessionId);
-  if (!entry) return;
+  if (!entry || entry.channelType === 'telegram') return;
   entry.pausedUntil = Date.now() + POST_DELIVERY_PAUSE_MS;
 }
 
