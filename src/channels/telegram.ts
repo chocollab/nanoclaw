@@ -375,9 +375,17 @@ export function createTelegramBridge(options: TelegramBridgeOptions = {}): Chann
     return null;
   }
   claimedBotIds.set(botId, instanceKey);
+  // Opt-in only: once true AND the owner connects this bot under Telegram's
+  // own Settings → Telegram Business → Chatbots, business_message updates
+  // start flowing — each connected personal chat becomes its own
+  // `telegram:biz:{connectionId}:{chatId}` channel through the same router.
+  // Off by default: this is real access to real private conversations with
+  // real other people, not something to switch on silently.
+  const businessMode = readEnvFile(['TELEGRAM_BUSINESS_MODE']).TELEGRAM_BUSINESS_MODE === 'true';
   const telegramAdapter = createTelegramAdapter({
     botToken: token,
     mode: 'polling',
+    businessMode,
   });
   const bridge = createChatSdkBridge({
     adapter: telegramAdapter,

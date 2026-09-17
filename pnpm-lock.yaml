@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@chat-adapter/telegram':
-        specifier: 4.29.0
-        version: 4.29.0
+        specifier: 4.40.0
+        version: 4.40.0
       '@clack/core':
         specifier: ^1.2.0
         version: 1.2.0
@@ -24,8 +24,8 @@ importers:
         specifier: 13.0.3
         version: 13.0.3
       chat:
-        specifier: 4.29.0
-        version: 4.29.0
+        specifier: 4.40.0
+        version: 4.40.0
       cron-parser:
         specifier: 5.5.0
         version: 5.5.0
@@ -75,12 +75,12 @@ importers:
 
 packages:
 
-  '@chat-adapter/shared@4.29.0':
-    resolution: {integrity: sha512-ARqTDoHJHKN9rpytbFPJbNmqqx3fOg5xwsTZdlingQPAssOSeHDBdqrFJkgDhyCRGbmDtG09cuS0FkVzeoh2qg==}
+  '@chat-adapter/shared@4.40.0':
+    resolution: {integrity: sha512-uTDl9p+PVkGtAw9dgvRdkydifvYVp98R26vGHhU4V5HuS7DBTedTdb1COUOh6vfP0SrC+xSozp4O/IyfbXZSKw==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/telegram@4.29.0':
-    resolution: {integrity: sha512-015tU3HEjFQWw7DgebXWkDeQA6lTdTVEO4btAV3f6U1kEnOfjLVJq98latcsM1WkEvv+3LIFKpsz9pG53aamBw==}
+  '@chat-adapter/telegram@4.40.0':
+    resolution: {integrity: sha512-SbAjiGIMWEK+nR7tdMenmAvnaUDSNQM8cqXc7zFBSbc5lCWtkcBEDsfpMGueqVR3FSsEnwOpOdWFHCsGgseiCQ==}
     engines: {node: '>=20'}
 
   '@clack/core@1.2.0':
@@ -612,14 +612,17 @@ packages:
   character-entities@2.0.2:
     resolution: {integrity: sha512-shx7oQ0Awen/BRIdkjkvz54PnEEI/EjwXDSIZp86/KKdbafHh1Df/RYGBhn4hbe2+uKC9FnT5UCEdyPz3ai9hQ==}
 
-  chat@4.29.0:
-    resolution: {integrity: sha512-KdPfzaie5ivYytyRICTERg5xT+LeCbYefokvNAqTHe92eqkFaoTMXXkSitikxJVWhZIb2YoXF1b9UZHyzSzKzw==}
+  chat@4.40.0:
+    resolution: {integrity: sha512-slu3VDxItlelEZ8A5vqzlmtT2WErqj2YCGuhhcNx+Ev0+wHeBUqUDUA7hXkca+BfFtW1ZX7ECcySCTG2q2gefg==}
     engines: {node: '>=20'}
     peerDependencies:
-      ai: ^6.0.182
+      ai: ^6.0.182 || ^7.0.0
+      workflow: ^5.0.0-beta.35
       zod: ^3.0.0 || ^4.0.0
     peerDependenciesMeta:
       ai:
+        optional: true
+      workflow:
         optional: true
       zod:
         optional: true
@@ -1409,21 +1412,23 @@ packages:
 
 snapshots:
 
-  '@chat-adapter/shared@4.29.0':
+  '@chat-adapter/shared@4.40.0':
     dependencies:
-      chat: 4.29.0
+      chat: 4.40.0
     transitivePeerDependencies:
       - ai
       - supports-color
+      - workflow
       - zod
 
-  '@chat-adapter/telegram@4.29.0':
+  '@chat-adapter/telegram@4.40.0':
     dependencies:
-      '@chat-adapter/shared': 4.29.0
-      chat: 4.29.0
+      '@chat-adapter/shared': 4.40.0
+      chat: 4.40.0
     transitivePeerDependencies:
       - ai
       - supports-color
+      - workflow
       - zod
 
   '@clack/core@1.2.0':
@@ -1878,7 +1883,7 @@ snapshots:
 
   character-entities@2.0.2: {}
 
-  chat@4.29.0:
+  chat@4.40.0:
     dependencies:
       '@workflow/serde': 4.1.0-beta.2
       mdast-util-to-string: 4.0.0
